@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rastreia+ · Dispositivo</title>
+<style>
+  :root{--bg:#0d131c;--card:#151d28;--fg:#e6ebf2;--muted:#8a99ad;--accent:#4f8ff0;--ok:#2bb183;--crit:#ef6160;--border:#293444}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;max-width:380px;width:100%;text-align:center}
+  .logo{width:56px;height:56px;border-radius:16px;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px}
+  h1{font-size:20px;margin:0 0 4px}
+  p.sub{color:var(--muted);font-size:13px;margin:0 0 20px}
+  .status{border-radius:12px;padding:14px;margin:16px 0;font-size:14px;background:#1a2330;border:1px solid var(--border)}
+  .status b{display:block;font-size:15px;margin-bottom:4px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .on{color:var(--ok)} .on .dot{background:var(--ok)}
+  .off{color:var(--muted)} .off .dot{background:var(--muted)}
+  .al{color:var(--crit)} .al .dot{background:var(--crit)}
+  button{width:100%;border:0;border-radius:24px;padding:14px;font-size:15px;font-weight:600;background:var(--accent);color:#fff;cursor:pointer;font-family:inherit}
+  button.stop{background:var(--crit)}
+  button:disabled{opacity:.5}
+  label{display:block;text-align:left;font-size:12px;color:var(--muted);margin:14px 0 5px}
+  input{width:100%;background:#1a2330;border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--fg);font-family:monospace;font-size:12px}
+  .coords{font-family:monospace;font-size:13px;color:var(--fg)}
+  .hint{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🛡️</div>
+    <h1>Dispositivo de rastreio</h1>
+    <p class="sub">Rastreia+ · central de proteção</p>
+
+    <label for="token">Token do dispositivo</label>
+    <input id="token" placeholder="cole o token aqui">
+
+    <div class="status off" id="status"><b><span class="dot"></span><span id="stxt">Parado</span></b><span class="coords" id="coords">Toque em iniciar para enviar sua localização</span></div>
+
+    <button id="btn">Autorizar e iniciar</button>
+
+    <p class="hint">Ao iniciar, o navegador vai pedir permissão de localização. Autorize para que a central consiga ver onde você está. Mantenha esta aba aberta.</p>
+  </div>
+
+<script>
+const API = location.origin;
+let watchId = null, enviando = false;
+
+// Preenche o token pela URL (?token=...)
+const params = new URLSearchParams(location.search);
+if (params.get('token')) document.getElementById('token').value = params.get('token');
+
+const statusEl = document.getElementById('status');
+const stxt = document.getElementById('stxt');
+const coords = document.getElementById('coords');
+const btn = document.getElementById('btn');
+
+function setStatus(cls, texto, detalhe) {
+  statusEl.className = 'status ' + cls;
+  stxt.textContent = texto;
+  if (detalhe != null) coords.textContent = detalhe;
+}
+
+async function enviar(pos) {
+  const token = document.getElementById('token').value.trim();
+  if (!token) { setStatus('off', 'Informe o token', 'Cole o token do dispositivo acima.'); parar(); return; }
+  const { latitude, longitude, accuracy } = pos.coords;
+  try {
+    const res = await fetch(API + '/api/localizacoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Device-Token': token },
+      body: JSON.stringify({ latitude, longitude, precisao_m: Math.round(accuracy), bateria: bateriaAtual() }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setStatus('on', 'Enviando localização', `lat ${latitude.toFixed(5)} · lng ${longitude.toFixed(5)} · ±${Math.round(accuracy)}m`);
+    } else {
+      setStatus('al', 'Erro', data.erro || 'Falha no envio');
+    }
+  } catch (e) {
+    setStatus('al', 'Sem conexão', 'Tentando novamente…');
+  }
+}
+
+let _bat = null;
+if (navigator.getBattery) navigator.getBattery().then(b => { _bat = b; });
+function bateriaAtual() { return _bat ? Math.round(_bat.level * 100) : null; }
+
+function iniciar() {
+  const token = document.getElementById('token').value.trim();
+  if (!token) { alert('Cole o token do dispositivo primeiro.'); return; }
+  if (!navigator.geolocation) { setStatus('al', 'Sem GPS', 'Este navegador não suporta geolocalização.'); return; }
+  setStatus('off', 'Aguardando GPS…', 'Autorize a localização quando o navegador pedir.');
+  watchId = navigator.geolocation.watchPosition(enviar,
+    (err) => setStatus('al', 'Permissão negada', err.message),
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  enviando = true;
+  btn.textContent = 'Parar envio';
+  btn.classList.add('stop');
+}
+function parar() {
+  if (watchId != null) navigator.geolocation.clearWatch(watchId);
+  watchId = null; enviando = false;
+  btn.textContent = 'Autorizar e iniciar';
+  btn.classList.remove('stop');
+  setStatus('off', 'Parado', 'Envio interrompido.');
+}
+btn.onclick = () => enviando ? parar() : iniciar();
+</script>
+</body>
+</html>

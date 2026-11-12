@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rastreia+ · Central de proteção</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <form class="login-card" id="loginForm">
+    <div class="login-logo"><span class="material-symbols-outlined">shield</span></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:var(--font-head);font-weight:600;font-size:20px">Rastreia+</div>
+      <div style="font-size:12px;color:var(--faint)">Central de proteção</div>
+    </div>
+    <div class="field"><label>E-mail</label><div class="field-box"><span class="material-symbols-outlined">mail</span><input id="lemail" type="email" value="ana.operadora@central.gov.br" autocomplete="username"></div></div>
+    <div class="field"><label>Senha</label><div class="field-box"><span class="material-symbols-outlined">lock</span><input id="lpass" type="password" value="123456" autocomplete="current-password"><span class="material-symbols-outlined" id="togglePass">visibility</span></div></div>
+    <div class="err" id="loginErr"></div>
+    <button class="btn btn-block" type="submit" id="loginBtn">Entrar</button>
+    <div style="text-align:center;margin-top:16px"><span class="badge-190">Central 190</span> <span style="font-size:11px;color:var(--faint)">acesso restrito e auditado</span></div>
+  </form>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-ic"><span class="material-symbols-outlined">shield</span></div><div><b>Rastreia+</b><small>Central de proteção</small></div></div>
+    <nav class="nav" id="nav">
+      <a href="#dashboard" data-v="dashboard"><span class="material-symbols-outlined">dashboard</span>Início</a>
+      <a href="#vitimas" data-v="vitimas"><span class="material-symbols-outlined">person</span>Vítimas</a>
+      <a href="#agressores" data-v="agressores"><span class="material-symbols-outlined">gpp_maybe</span>Agressores</a>
+      <a href="#dispositivos" data-v="dispositivos"><span class="material-symbols-outlined">smartphone</span>Dispositivos</a>
+      <a href="#geocercas" data-v="geocercas"><span class="material-symbols-outlined">location_on</span>Geo-cercas</a>
+      <a href="#alertas" data-v="alertas"><span class="material-symbols-outlined">notifications</span>Alertas</a>
+      <a href="#relatorios" data-v="relatorios"><span class="material-symbols-outlined">assessment</span>Relatórios</a>
+      <a href="#usuarios" data-v="usuarios" class="admin-only"><span class="material-symbols-outlined">group</span>Usuários</a>
+      <a href="#auditoria" data-v="auditoria" class="admin-only"><span class="material-symbols-outlined">manage_search</span>Auditoria</a>
+    </nav>
+    <div style="margin-top:auto">
+      <button class="logout" id="logoutBtn"><span class="material-symbols-outlined">logout</span>Sair</button>
+      <div class="sidebar-foot"><span class="material-symbols-outlined" style="font-size:16px">verified_user</span> v1.0 · Node + Postgres</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamb" id="hamb" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button>
+      <h1 id="viewTitle">Início</h1>
+      <div class="searchbar"><span class="material-symbols-outlined">search</span><input placeholder="Buscar…" disabled></div>
+      <button class="icon-btn" id="themeBtn" aria-label="Tema"><span class="material-symbols-outlined" id="themeIc">dark_mode</span></button>
+      <div class="avatar" id="meAvatar">··</div>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toast"></div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
